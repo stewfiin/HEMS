@@ -1,50 +1,71 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - HEMS.Web</title>
+    <title>@ViewData["Title"] - HEMS Fleet Management</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/HEMS.Web.styles.css" asp-append-version="true" />
+    <!-- Telerik Kendo UI CSS (Free CDN) -->
+    <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2023.2.829/styles/kendo.default-v2.min.css" />
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .navbar-custom { background: #1a252f; }
+        .navbar-custom .navbar-brand, .navbar-custom .nav-link { color: #ecf0f1 !important; font-weight: 500; }
+        .navbar-custom .nav-link:hover { color: #f39c12 !important; }
+        .card-stats { border-radius: 8px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.06); }
+        .badge-op { background-color: #28a745; color: white; }
+        .badge-bd { background-color: #dc3545; color: white; }
+        .badge-mnt { background-color: #ffc107; color: black; }
+        .badge-stb { background-color: #6c757d; color: white; }
+    </style>
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">HEMS.Web</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+        <nav class="navbar navbar-expand-lg navbar-dark navbar-custom mb-4 shadow-sm">
+            <div class="container-fluid px-4">
+                <a class="navbar-brand fw-bold" asp-page="/Index">
+                    <i class="fa-solid fa-truck-monster text-warning me-2"></i>HEMS Enterprise
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+                <div class="collapse navbar-collapse" id="navContent">
+                    <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
+                            <a class="nav-link active" asp-page="/Index"><i class="fa-solid fa-chart-line me-1"></i> Dashboard</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
+                            <a class="nav-link" href="/swagger" target="_blank"><i class="fa-solid fa-code me-1"></i> Swagger API</a>
                         </li>
                     </ul>
+                    <span class="navbar-text text-white-50">
+                        <i class="fa-solid fa-circle text-success me-1"></i> SQL Server + Redis Connected
+                    </span>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
+
+    <div class="container-fluid px-4">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
+    <footer class="footer border-top py-3 text-muted text-center mt-5 bg-white">
         <div class="container">
-            &copy; 2026 - HEMS.Web - <a asp-area="" asp-page="/Privacy">Privacy</a>
+            &copy; 2026 - HEMS (Heavy Equipment Maintenance System) | Built with .NET 8, SQL Server, Redis & Kendo UI
         </div>
     </footer>
 
+    <!-- jQuery & Bootstrap -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <!-- Telerik Kendo UI Core Script (Free CDN) -->
+    <script src="https://kendo.cdn.telerik.com/2023.2.829/js/kendo.ui.core.min.js"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>
