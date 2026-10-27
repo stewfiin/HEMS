@@ -42,3 +42,4 @@ public record CompleteWorkOrderResponse(
     bool Success,
     string Message
 );
+

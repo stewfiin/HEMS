@@ -10,3 +10,4 @@ public interface IWorkOrderService
     Task<CompleteWorkOrderResponse> CompleteWorkOrderAsync(int id, CompleteWorkOrderRequest request);
     Task<bool> CloseWorkOrderAsync(int id);
 }
+

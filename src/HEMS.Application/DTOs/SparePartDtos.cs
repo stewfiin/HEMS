@@ -18,3 +18,4 @@ public record CreateSparePartRequest(
 public record UpdateSparePartStockRequest(
     int AdditionalQuantity
 );
+

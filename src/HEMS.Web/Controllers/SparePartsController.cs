@@ -44,3 +44,4 @@ public class SparePartsController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 }
+

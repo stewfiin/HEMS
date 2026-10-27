@@ -7,3 +7,4 @@ public interface IDashboardService
     Task<DashboardSummaryDto> GetSummaryAsync(bool forceRefresh = false);
     Task InvalidateDashboardCacheAsync();
 }
+

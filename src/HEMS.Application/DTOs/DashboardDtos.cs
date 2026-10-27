@@ -16,3 +16,4 @@ public record DashboardSummaryDto(
     List<TopBreakdownEquipmentDto> TopBreakdownUnits,
     bool FromCache = false
 );
+

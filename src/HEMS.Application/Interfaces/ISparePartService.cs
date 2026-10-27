@@ -9,3 +9,4 @@ public interface ISparePartService
     Task<SparePartDto?> GetByIdAsync(int id);
     Task<SparePartDto> CreateAsync(CreateSparePartRequest request);
 }
+

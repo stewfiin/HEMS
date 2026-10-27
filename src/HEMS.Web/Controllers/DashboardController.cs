@@ -21,3 +21,4 @@ public class DashboardController : ControllerBase
         return Ok(summary);
     }
 }
+

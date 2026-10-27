@@ -58,3 +58,4 @@ public class SparePartService : ISparePartService
         return new SparePartDto(part.Id, part.PartNumber, part.PartName, part.StockQuantity, part.UnitPrice);
     }
 }
+
