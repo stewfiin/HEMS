@@ -15,4 +15,9 @@
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.10" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\HEMS.Domain\HEMS.Domain.csproj" />
+    <ProjectReference Include="..\HEMS.Application\HEMS.Application.csproj" />
+  </ItemGroup>
+
 </Project>
