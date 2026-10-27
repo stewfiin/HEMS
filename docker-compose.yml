@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: hems-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=HemsP@ssw0rd2026!
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - hems_sqldata:/var/opt/mssql
+
+  redis:
+    image: redis:7-alpine
+    container_name: hems-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - hems_redisdata:/data
+
+volumes:
+  hems_sqldata:
+  hems_redisdata:

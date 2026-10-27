@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\build\HEMS.Web.props" />
-</Project>
