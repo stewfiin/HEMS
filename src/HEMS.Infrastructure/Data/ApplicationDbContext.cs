@@ -1,6 +1,7 @@
 using HEMS.Application.Interfaces;
 using HEMS.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace HEMS.Infrastructure.Data;
 
@@ -16,6 +17,11 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<WorkOrder> WorkOrders => Set<WorkOrder>();
     public DbSet<SparePart> SpareParts => Set<SparePart>();
     public DbSet<WorkOrderPart> WorkOrderParts => Set<WorkOrderPart>();
+
+    public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+    {
+        return Database.BeginTransactionAsync(cancellationToken);
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

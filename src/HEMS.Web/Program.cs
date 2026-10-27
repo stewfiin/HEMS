@@ -1,16 +1,21 @@
-using HEMS.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
 using HEMS.Application.Interfaces;
 using HEMS.Application.Services;
+using HEMS.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+
 // Registrasi SQL Server DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 builder.Services.AddScoped<IEquipmentService, EquipmentService>();
+builder.Services.AddScoped<IWorkOrderService, WorkOrderService>();
+
 // Registrasi Redis Distributed Cache
 builder.Services.AddStackExchangeRedisCache(options =>
 {
@@ -24,7 +29,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
