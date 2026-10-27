@@ -1,0 +1,11 @@
+C:\laragon\www\HEMS\src\HEMS.Infrastructure\bin\Debug\net8.0\HEMS.Infrastructure.deps.json
+C:\laragon\www\HEMS\src\HEMS.Infrastructure\bin\Debug\net8.0\HEMS.Infrastructure.dll
+C:\laragon\www\HEMS\src\HEMS.Infrastructure\bin\Debug\net8.0\HEMS.Infrastructure.pdb
+C:\laragon\www\HEMS\src\HEMS.Infrastructure\obj\Debug\net8.0\HEMS.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\laragon\www\HEMS\src\HEMS.Infrastructure\obj\Debug\net8.0\HEMS.Infrastructure.AssemblyInfoInputs.cache
+C:\laragon\www\HEMS\src\HEMS.Infrastructure\obj\Debug\net8.0\HEMS.Infrastructure.AssemblyInfo.cs
+C:\laragon\www\HEMS\src\HEMS.Infrastructure\obj\Debug\net8.0\HEMS.Infrastructure.csproj.CoreCompileInputs.cache
+C:\laragon\www\HEMS\src\HEMS.Infrastructure\obj\Debug\net8.0\HEMS.Infrastructure.dll
+C:\laragon\www\HEMS\src\HEMS.Infrastructure\obj\Debug\net8.0\refint\HEMS.Infrastructure.dll
+C:\laragon\www\HEMS\src\HEMS.Infrastructure\obj\Debug\net8.0\HEMS.Infrastructure.pdb
+C:\laragon\www\HEMS\src\HEMS.Infrastructure\obj\Debug\net8.0\ref\HEMS.Infrastructure.dll
