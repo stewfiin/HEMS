@@ -15,6 +15,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 builder.Services.AddScoped<IEquipmentService, EquipmentService>();
 builder.Services.AddScoped<IWorkOrderService, WorkOrderService>();
+builder.Services.AddScoped<ISparePartService, SparePartService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 // Registrasi Redis Distributed Cache
 builder.Services.AddStackExchangeRedisCache(options =>
