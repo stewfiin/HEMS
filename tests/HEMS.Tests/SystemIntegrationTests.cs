@@ -108,3 +108,4 @@ public class SystemIntegrationTests : IDisposable
         mockCache.Verify(c => c.RemoveAsync("dashboard_summary", default), Times.Once);
     }
 }
+

@@ -136,3 +136,4 @@ public class UserAcceptanceTests : IDisposable
         Assert.Equal(EquipmentStatus.Operating, freshEq!.Status);
     }
 }
+
