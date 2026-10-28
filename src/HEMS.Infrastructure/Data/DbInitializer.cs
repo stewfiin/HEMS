@@ -52,6 +52,7 @@ public static class DbInitializer
             };
 
             await context.Equipments.AddRangeAsync(equipments);
+            await context.SaveChangesAsync();
         }
 
         // 2. Seed Spare Parts jika belum ada
@@ -83,8 +84,28 @@ public static class DbInitializer
             };
 
             await context.SpareParts.AddRangeAsync(spareParts);
+            await context.SaveChangesAsync();
         }
 
-        await context.SaveChangesAsync();
+        // 3. Seed Sample Work Orders jika belum ada
+        if (!await context.WorkOrders.AnyAsync())
+        {
+            var scania = await context.Equipments.FirstOrDefaultAsync(e => e.EquipmentCode == "DT-3005");
+            if (scania != null)
+            {
+                var sampleWO = new WorkOrder
+                {
+                    WorkOrderNumber = "WO-202610-0001",
+                    EquipmentId = scania.Id,
+                    MaintenanceType = MaintenanceType.Corrective,
+                    ProblemDescription = "Kebocoran pada hydraulic cylinder steering dan lampu indikator engine menyala.",
+                    Status = WorkOrderStatus.Assigned,
+                    AssignedMechanic = "Budi Santoso (Chief Mechanic)",
+                    BreakdownStartTime = DateTime.UtcNow.AddHours(-4)
+                };
+                context.WorkOrders.Add(sampleWO);
+                await context.SaveChangesAsync();
+            }
+        }
     }
 }

@@ -1,0 +1,175 @@
+@page
+@model SparePartsModel
+@{
+    ViewData["Title"] = "Katalog Suku Cadang";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="fa-solid fa-boxes-stacked text-primary me-2"></i>Katalog Suku Cadang & Inventaris Gudang</h4>
+        <p class="text-muted mb-0">Kelola master data suku cadang (Part Number), verifikasi stok gudang secara real-time, dan monitor mutasi barang.</p>
+    </div>
+    <button class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#modalAddPart">
+        <i class="fa-solid fa-plus me-1"></i> Tambah Suku Cadang Baru
+    </button>
+</div>
+
+<div id="partAlert" class="alert d-none mb-3"></div>
+
+<!-- Live Search & Grid Card -->
+<div class="card card-stats p-4 bg-white">
+    <div class="row mb-3 align-items-center">
+        <div class="col-md-6">
+            <h5 class="fw-bold mb-0">Daftar Suku Cadang Gudang</h5>
+        </div>
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text bg-light"><i class="fa-solid fa-magnifying-glass"></i></span>
+                <input type="text" id="inputSearchPart" class="form-control" placeholder="Cari Part Number atau Nama Komponen..." />
+                <button class="btn btn-outline-secondary" type="button" onclick="searchParts()">Cari</button>
+            </div>
+        </div>
+    </div>
+    <div id="sparePartsGrid"></div>
+</div>
+
+<!-- Modal: Tambah Suku Cadang Baru -->
+<div class="modal fade" id="modalAddPart" tabindex="-1" aria-labelledby="modalAddPartLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="modalAddPartLabel"><i class="fa-solid fa-box-open me-2"></i>Tambah Master Suku Cadang</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formAddPart">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nomor Part (Part Number)</label>
+                        <input type="text" class="form-control" id="inputPartNumber" placeholder="Contoh: 6732-71-6111" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nama Komponen / Deskripsi</label>
+                        <input type="text" class="form-control" id="inputPartName" placeholder="Contoh: Engine Oil Filter Element" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Jumlah Stok Awal Gudang</label>
+                        <input type="number" min="0" class="form-control" id="inputStockQuantity" value="10" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Harga Satuan (IDR)</label>
+                        <input type="number" step="1000" min="0" class="form-control" id="inputUnitPrice" placeholder="Contoh: 450000" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary fw-bold"><i class="fa-solid fa-floppy-disk me-1"></i> Simpan Suku Cadang</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    $(document).ready(function() {
+        initPartsGrid("/api/v1/spare-parts");
+
+        // Live search dengan debounce
+        let timer;
+        $('#inputSearchPart').on('input', function() {
+            clearTimeout(timer);
+            let val = $(this).val();
+            timer = setTimeout(function() {
+                let url = val ? `/api/v1/spare-parts/search?query=${encodeURIComponent(val)}` : "/api/v1/spare-parts";
+                $("#sparePartsGrid").data("kendoGrid").dataSource.transport.options.read.url = url;
+                $("#sparePartsGrid").data("kendoGrid").dataSource.read();
+            }, 300);
+        });
+    });
+
+    function initPartsGrid(readUrl) {
+        $("#sparePartsGrid").kendoGrid({
+            dataSource: {
+                transport: {
+                    read: {
+                        url: readUrl,
+                        dataType: "json"
+                    }
+                },
+                schema: {
+                    model: {
+                        id: "id",
+                        fields: {
+                            id: { type: "number" },
+                            partNumber: { type: "string" },
+                            partName: { type: "string" },
+                            stockQuantity: { type: "number" },
+                            unitPrice: { type: "number" }
+                        }
+                    }
+                },
+                pageSize: 10
+            },
+            height: 520,
+            pageable: true,
+            sortable: true,
+            filterable: true,
+            columns: [
+                { field: "partNumber", title: "Part Number", width: "160px", template: "<strong>#: partNumber #</strong>" },
+                { field: "partName", title: "Nama Komponen", width: "280px" },
+                { 
+                    field: "stockQuantity", 
+                    title: "Stok Tersedia", 
+                    width: "140px",
+                    template: function(d) {
+                        if (d.stockQuantity <= 15) {
+                            return `<span class="badge bg-warning text-dark"><i class="fa-solid fa-triangle-exclamation me-1"></i>${d.stockQuantity} pcs (Menipis)</span>`;
+                        }
+                        return `<span class="badge bg-success">${d.stockQuantity} pcs</span>`;
+                    }
+                },
+                { 
+                    field: "unitPrice", 
+                    title: "Harga Satuan", 
+                    width: "160px",
+                    template: "Rp #: kendo.toString(unitPrice, 'n0') #" 
+                }
+            ]
+        });
+    }
+
+    function searchParts() {
+        let val = $('#inputSearchPart').val();
+        let url = val ? `/api/v1/spare-parts/search?query=${encodeURIComponent(val)}` : "/api/v1/spare-parts";
+        $("#sparePartsGrid").data("kendoGrid").dataSource.transport.options.read.url = url;
+        $("#sparePartsGrid").data("kendoGrid").dataSource.read();
+    }
+
+    $('#formAddPart').submit(function(e) {
+        e.preventDefault();
+        let payload = {
+            partNumber: $('#inputPartNumber').val(),
+            partName: $('#inputPartName').val(),
+            stockQuantity: parseInt($('#inputStockQuantity').val()),
+            unitPrice: parseFloat($('#inputUnitPrice').val())
+        };
+
+        $.ajax({
+            url: '/api/v1/spare-parts',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function() {
+                $('#modalAddPart').modal('hide');
+                $('#formAddPart')[0].reset();
+                $('#partAlert').removeClass().addClass('alert alert-success').html('<i class="fa-solid fa-circle-check me-1"></i> Data suku cadang berhasil ditambahkan ke inventaris!').removeClass('d-none');
+                setTimeout(() => $('#partAlert').addClass('d-none'), 4000);
+                $("#sparePartsGrid").data("kendoGrid").dataSource.read();
+            },
+            error: function() {
+                alert("Gagal menambahkan suku cadang.");
+            }
+        });
+    });
+</script>
+}

@@ -1,0 +1,353 @@
+@page
+@model WorkOrdersModel
+@{
+    ViewData["Title"] = "Manajemen Work Order";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="fa-solid fa-clipboard-list text-primary me-2"></i>Manajemen Work Order (WO)</h4>
+        <p class="text-muted mb-0">Kelola tiket servis berkala (Preventive) dan perbaikan darurat breakdown (Corrective) armada alat berat.</p>
+    </div>
+    <button class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#modalCreateWO">
+        <i class="fa-solid fa-plus me-1"></i> Buat Work Order Baru
+    </button>
+</div>
+
+<!-- Alert container -->
+<div id="woGlobalAlert" class="alert d-none mb-3"></div>
+
+<!-- Work Orders Kendo Grid -->
+<div class="card card-stats p-4 bg-white">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Daftar Tiket Work Order</h5>
+        <button class="btn btn-sm btn-outline-secondary" onclick="reloadWOGrid()">
+            <i class="fa-solid fa-rotate me-1"></i> Refresh Data
+        </button>
+    </div>
+    <div id="workOrdersGrid"></div>
+</div>
+
+<!-- Modal 1: Buat Work Order Baru -->
+<div class="modal fade" id="modalCreateWO" tabindex="-1" aria-labelledby="modalCreateWOLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="modalCreateWOLabel"><i class="fa-solid fa-file-circle-plus me-2"></i>Buat Work Order Baru</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formCreateWO">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Pilih Unit Alat Berat</label>
+                        <select class="form-select" id="selectWOEquipment" required>
+                            <option value="">-- Memuat Armada... --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Jenis Pemeliharaan</label>
+                        <select class="form-select" id="selectMaintenanceType" required>
+                            <option value="Preventive">Preventive Maintenance (Servis Berkala Terjadwal)</option>
+                            <option value="Corrective">Corrective Maintenance (Kerusakan / Breakdown Unit)</option>
+                        </select>
+                        <small class="text-muted">Jika Corrective dipilih, status unit otomatis diubah menjadi <strong>Breakdown</strong>.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Mekanik yang Ditugaskan</label>
+                        <input type="text" class="form-control" id="inputAssignedMechanic" placeholder="Contoh: Budi Santoso (Chief Mechanic)" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Deskripsi Masalah / Rincian Servis</label>
+                        <textarea class="form-control" id="inputProblemDescription" rows="3" placeholder="Jelaskan kendala mesin atau rincian servis berkala..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary fw-bold"><i class="fa-solid fa-floppy-disk me-1"></i> Terbitkan Tiket WO</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 2: Selesaikan Work Order & Potong Suku Cadang -->
+<div class="modal fade" id="modalCompleteWO" tabindex="-1" aria-labelledby="modalCompleteWOLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold" id="modalCompleteWOLabel"><i class="fa-solid fa-wrench me-2"></i>Selesaikan Work Order & Penggunaan Suku Cadang</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formCompleteWO">
+                <div class="modal-body">
+                    <input type="hidden" id="completeWOId" />
+                    <div class="alert alert-info py-2 small mb-3">
+                        <i class="fa-solid fa-info-circle me-1"></i> Menyelesaikan WO ini akan mengeksekusi <strong>Database Transaction</strong> atomik untuk memotong stok suku cadang gudang. Jika stok tidak mencukupi, sistem akan otomatis me-rollback transaksi.
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <span class="text-muted d-block small">Nomor Work Order</span>
+                            <span class="fw-bold" id="completeWONumber">--</span>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted d-block small">Unit Alat Berat</span>
+                            <span class="fw-bold" id="completeWOUnit">--</span>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold mt-3 mb-2"><i class="fa-solid fa-boxes-stacked me-1"></i> Suku Cadang yang Digunakan:</h6>
+                    <table class="table table-bordered table-sm align-middle" id="tablePartsUsed">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Suku Cadang (Part Number & Nama)</th>
+                                <th style="width: 130px;">Jumlah Dipakai</th>
+                                <th style="width: 60px;" class="text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="partsUsedBody">
+                            <!-- Baris part dinamis dimasukkan ke sini -->
+                        </tbody>
+                    </table>
+                    <button type="button" class="btn btn-outline-success btn-sm" onclick="addPartRow()">
+                        <i class="fa-solid fa-plus me-1"></i> Tambah Komponen Suku Cadang
+                    </button>
+                    <div id="modalAlertError" class="alert alert-danger d-none mt-3 small py-2"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-success fw-bold"><i class="fa-solid fa-check me-1"></i> Konfirmasi Selesai & Potong Stok</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let availableSpareParts = [];
+
+    $(document).ready(function() {
+        initWorkOrdersGrid();
+        loadEquipmentsDropdown();
+        loadSparePartsList();
+    });
+
+    function loadEquipmentsDropdown() {
+        $.getJSON('/api/v1/equipments', function(data) {
+            let select = $('#selectWOEquipment');
+            select.empty().append('<option value="">-- Pilih Unit Armada --</option>');
+            data.forEach(eq => {
+                select.append(`<option value="${eq.id}">${eq.equipmentCode} - ${eq.brand} ${eq.model} (Status: ${eq.status})</option>`);
+            });
+        });
+    }
+
+    function loadSparePartsList() {
+        $.getJSON('/api/v1/spare-parts', function(data) {
+            availableSpareParts = data;
+        });
+    }
+
+    function initWorkOrdersGrid() {
+        $("#workOrdersGrid").kendoGrid({
+            dataSource: {
+                transport: {
+                    read: {
+                        url: "/api/v1/work-orders",
+                        dataType: "json"
+                    }
+                },
+                schema: {
+                    model: {
+                        id: "id",
+                        fields: {
+                            id: { type: "number" },
+                            workOrderNumber: { type: "string" },
+                            equipmentCode: { type: "string" },
+                            maintenanceType: { type: "string" },
+                            problemDescription: { type: "string" },
+                            status: { type: "string" },
+                            assignedMechanic: { type: "string" },
+                            breakdownStartTime: { type: "date" },
+                            completedTime: { type: "date" }
+                        }
+                    }
+                },
+                pageSize: 10
+            },
+            height: 520,
+            pageable: true,
+            sortable: true,
+            filterable: true,
+            columns: [
+                { field: "workOrderNumber", title: "No. Work Order", width: "160px", template: "<strong>#: workOrderNumber #</strong>" },
+                { field: "equipmentCode", title: "Unit Alat", width: "110px", template: "<span class='badge bg-dark'>#: equipmentCode #</span>" },
+                { 
+                    field: "maintenanceType", 
+                    title: "Tipe Servis", 
+                    width: "130px",
+                    template: function(d) {
+                        return d.maintenanceType === "Corrective" 
+                            ? '<span class="badge bg-danger">Corrective</span>' 
+                            : '<span class="badge bg-primary">Preventive</span>';
+                    }
+                },
+                { field: "problemDescription", title: "Rincian Masalah / Deskripsi", width: "230px" },
+                { field: "assignedMechanic", title: "Mekanik Lapangan", width: "160px" },
+                { 
+                    field: "status", 
+                    title: "Status Tiket", 
+                    width: "130px",
+                    template: function(d) {
+                        if (d.status === "Assigned") return '<span class="badge bg-secondary">Assigned</span>';
+                        if (d.status === "InProgress") return '<span class="badge bg-info text-dark">In Progress</span>';
+                        if (d.status === "WaitingParts") return '<span class="badge bg-warning text-dark">Waiting Parts</span>';
+                        if (d.status === "Completed") return '<span class="badge bg-success">Completed</span>';
+                        if (d.status === "Closed") return '<span class="badge bg-dark">Closed</span>';
+                        return `<span class="badge bg-light text-dark">${d.status}</span>`;
+                    }
+                },
+                {
+                    title: "Aksi Manajemen",
+                    width: "220px",
+                    template: function(d) {
+                        if (d.status === "Closed") {
+                            return '<span class="text-muted small"><i class="fa-solid fa-lock me-1"></i>Selesai & Tertutup</span>';
+                        }
+                        if (d.status === "Completed") {
+                            return `<button class="btn btn-outline-dark btn-sm fw-bold" onclick="closeWO(${d.id})">
+                                        <i class="fa-solid fa-circle-check me-1"></i> Tutup WO
+                                    </button>`;
+                        }
+                        return `<button class="btn btn-success btn-sm fw-bold me-1" onclick="openCompleteModal(${d.id}, '${d.workOrderNumber}', '${d.equipmentCode}')">
+                                    <i class="fa-solid fa-wrench me-1"></i> Selesaikan
+                                </button>
+                                <button class="btn btn-outline-dark btn-sm" onclick="closeWO(${d.id})">
+                                    <i class="fa-solid fa-check me-1"></i> Tutup
+                                </button>`;
+                    }
+                }
+            ]
+        });
+    }
+
+    function reloadWOGrid() {
+        $("#workOrdersGrid").data("kendoGrid").dataSource.read();
+    }
+
+    // Submit Create Work Order
+    $('#formCreateWO').submit(function(e) {
+        e.preventDefault();
+        let payload = {
+            equipmentId: parseInt($('#selectWOEquipment').val()),
+            maintenanceType: $('#selectMaintenanceType').val(),
+            problemDescription: $('#inputProblemDescription').val(),
+            assignedMechanic: $('#inputAssignedMechanic').val()
+        };
+
+        $.ajax({
+            url: '/api/v1/work-orders',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function() {
+                $('#modalCreateWO').modal('hide');
+                $('#formCreateWO')[0].reset();
+                showGlobalAlert('alert-success', '<i class="fa-solid fa-circle-check me-1"></i> Tiket Work Order baru berhasil diterbitkan!');
+                reloadWOGrid();
+            },
+            error: function(xhr) {
+                let msg = xhr.responseJSON ? xhr.responseJSON.message : "Gagal menerbitkan WO.";
+                alert(msg);
+            }
+        });
+    });
+
+    // Buka Modal Selesaikan WO
+    function openCompleteModal(id, woNumber, equipmentCode) {
+        $('#completeWOId').val(id);
+        $('#completeWONumber').text(woNumber);
+        $('#completeWOUnit').text(equipmentCode);
+        $('#partsUsedBody').empty();
+        $('#modalAlertError').addClass('d-none');
+        // Tambahkan 1 baris part default
+        addPartRow();
+        $('#modalCompleteWO').modal('show');
+    }
+
+    function addPartRow() {
+        let options = availableSpareParts.map(p => 
+            `<option value="${p.id}">${p.partNumber} - ${p.partName} (Sisa Stok: ${p.stockQuantity})</option>`
+        ).join('');
+
+        let row = `<tr>
+            <td>
+                <select class="form-select form-select-sm select-part" required>
+                    ${options}
+                </select>
+            </td>
+            <td>
+                <input type="number" min="1" value="1" class="form-control form-control-sm input-part-qty" required />
+            </td>
+            <td class="text-center">
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="$(this).closest('tr').remove()"><i class="fa-solid fa-trash"></i></button>
+            </td>
+        </tr>`;
+        $('#partsUsedBody').append(row);
+    }
+
+    // Submit Selesaikan Work Order
+    $('#formCompleteWO').submit(function(e) {
+        e.preventDefault();
+        let woId = $('#completeWOId').val();
+        let parts = [];
+
+        $('#partsUsedBody tr').each(function() {
+            let partId = parseInt($(this).find('.select-part').val());
+            let qty = parseInt($(this).find('.input-part-qty').val());
+            if (partId && qty > 0) {
+                parts.push({ sparePartId: partId, quantity: qty });
+            }
+        });
+
+        $.ajax({
+            url: `/api/v1/work-orders/${woId}/complete`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({ partsUsed: parts }),
+            success: function(res) {
+                $('#modalCompleteWO').modal('hide');
+                showGlobalAlert('alert-success', `<i class="fa-solid fa-circle-check me-1"></i> ${res.message}`);
+                reloadWOGrid();
+                loadSparePartsList(); // Refresh data stok
+            },
+            error: function(xhr) {
+                let msg = xhr.responseJSON ? xhr.responseJSON.message : "Terjadi kegagalan transaksi.";
+                $('#modalAlertError').removeClass('d-none').html(`<i class="fa-solid fa-triangle-exclamation me-1"></i> ${msg}`);
+            }
+        });
+    });
+
+    // Tutup Work Order
+    function closeWO(id) {
+        if (!confirm("Konfirmasi menutup Work Order ini? Status unit alat berat akan dikembalikan ke Operating.")) return;
+
+        $.ajax({
+            url: `/api/v1/work-orders/${id}/close`,
+            type: 'PUT',
+            success: function(res) {
+                showGlobalAlert('alert-success', `<i class="fa-solid fa-circle-check me-1"></i> ${res.message}`);
+                reloadWOGrid();
+            },
+            error: function() {
+                alert("Gagal menutup Work Order.");
+            }
+        });
+    }
+
+    function showGlobalAlert(alertClass, htmlContent) {
+        $('#woGlobalAlert').removeClass().addClass(`alert ${alertClass} alert-dismissible fade show`).html(htmlContent).removeClass('d-none');
+        setTimeout(() => $('#woGlobalAlert').addClass('d-none'), 5000);
+    }
+</script>
+}
